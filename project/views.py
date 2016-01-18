@@ -57,7 +57,7 @@ def tasks():
 	)
 	open_tasks = [
 		dict(name=row[0], due_date=row[1], priority=row[2],
-			tasks_id=row[3]) for row in cur.fetchall()
+			task_id=row[3]) for row in cur.fetchall()
 		]
 	cur = g.db.execute(
 		'select name, due_date, priority, task_id from tasks where \
@@ -81,7 +81,7 @@ def tasks():
 def new_task():
 	g.db = connect_db()
 	name = request.form['name']
-	date = request-form['due_date']
+	date = request.form['due_date']
 	priority = request.form['priority']
 	if not name or not date or not priority:
 		flash("All fields are required. Please try again.")
