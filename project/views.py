@@ -27,8 +27,13 @@ def login_required(test):
 
 	return wrap
 
-# route handlers
+def flash_errors(form):
+	for field, errors in form.errors.items():
+		for error in errors:
+			flash(u"Error in the %s field - %s" % (
+				getattr(form, field).label.text, error), 'error')
 
+# route handlers
 @app.route('/logout/')
 def logout():
 	session.pop('logged_in', None)
