@@ -39,6 +39,10 @@ class AllTests(unittest.TestCase):
 			follow_redirects=True
 			)
 
+	# Get logout/ page 
+	def logout(self):
+		return self.app.get('logout/', follow_redirects=True)
+
 	# each test should start with 'test'
 	def test_user_can_register(self):
 		new_user=User("michael", "michael@mherman.org",
@@ -75,5 +79,38 @@ class AllTests(unittest.TestCase):
 			'python')
 		response = self.login('alert("alert box!");', 'foo')
 		self.assertIn(b'Invalid username or password.', response.data)
+
+	# Test if form is present on register page
+	def test_form_is_present_on_register_page(self):
+		response = self.app.get('register/')
+		self.assertEqual(response.status_code, 200)
+		self.assertIn(b'Please register to access the task list.', 
+			response.data)
+	# Test if error is shown when user allready registered
+	def test_user_registration_error(self):
+		self.app.get('register/', follow_redirects=True)
+		self.register(
+			'Michael', 'michael@realpython.com', 'python', 'python')
+		self.app.get('register/', follow_redirects=True)
+		response = self.register(
+			'Michael', 'michael@realpython.com', 'python', 'python')
+		self.assertIn(b'That username and/or email already exist.',
+			response.data)
+
+	# Test logged in users can logout
+	def test_logged_in_users_can_logout(self):
+		self.register('Fletcher', 'fletcher@realpython.com',
+			'python101', 'python101')
+		self.login('Fletcher', 'python101')
+		response = self.logout()
+		self.assertIn(b'Goodbye!', response.data)
+
+	# Test not logged user cannot logout
+	def test_not_logged_in_users_cannot_logout(self):
+		response = self.logout()
+		self.assertNotIn(b'Goodbye!', response.data)
+	
+
+
 if __name__ == "__main__":
 	unittest.main()
