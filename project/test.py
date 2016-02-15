@@ -43,6 +43,21 @@ class AllTests(unittest.TestCase):
 	def logout(self):
 		return self.app.get('logout/', follow_redirects=True)
 
+		#helper function to create user
+		def create_user(self, name, email, password):
+			new_user = User(name=name, email=email, password=password)
+			db.session.add(new_user)
+			db.session.commit()
+
+		# Helper function to create task
+		def create_task(self):
+			return self.app.post('add/', data=dict=(
+				name='Go to the bank',
+				due_date='02/05/2014',
+				priority='1',
+				posted_date='02/04/2014',
+				status='1'), follow_redirects=True)
+
 	# each test should start with 'test'
 	def test_user_can_register(self):
 		new_user=User("michael", "michael@mherman.org",
@@ -109,8 +124,16 @@ class AllTests(unittest.TestCase):
 	def test_not_logged_in_users_cannot_logout(self):
 		response = self.logout()
 		self.assertNotIn(b'Goodbye!', response.data)
-	
 
+def test_logged_can_access_tasks_not_logged_cannot(self):
+	response = self.app.get('tasks/')
+	self.assertIn(b'You need to login first.', response,data)
+	self.register('Fletcher', 'fletcher@realpython.com', 'salasana', 'salasana')
+	self.login('Fletcher', 'salasana')
+	self.assertEqual(response.status_code, 200)
+	self.assertIn(b'Add a new task:', response.data)
+
+# 
 
 if __name__ == "__main__":
 	unittest.main()
