@@ -43,20 +43,20 @@ class AllTests(unittest.TestCase):
 	def logout(self):
 		return self.app.get('logout/', follow_redirects=True)
 
-		#helper function to create user
-		def create_user(self, name, email, password):
-			new_user = User(name=name, email=email, password=password)
-			db.session.add(new_user)
-			db.session.commit()
+	#helper function to create user
+	def create_user(self, name, email, password):
+		new_user = User(name=name, email=email, password=password)
+		db.session.add(new_user)
+		db.session.commit()
 
-		# Helper function to create task
-		def create_task(self):
-			return self.app.post('add/', data=dict=(
-				name='Go to the bank',
-				due_date='02/05/2014',
-				priority='1',
-				posted_date='02/04/2014',
-				status='1'), follow_redirects=True)
+	# Helper function to create task
+	def create_task(self):
+		return self.app.post('add/', data=dict(
+			name='Go to the bank',
+			due_date='02/05/2014',
+			priority='1',
+			posted_date='02/04/2014',
+			status='1'), follow_redirects=True)
 
 	# each test should start with 'test'
 	def test_user_can_register(self):
@@ -125,15 +125,71 @@ class AllTests(unittest.TestCase):
 		response = self.logout()
 		self.assertNotIn(b'Goodbye!', response.data)
 
-def test_logged_can_access_tasks_not_logged_cannot(self):
-	response = self.app.get('tasks/')
-	self.assertIn(b'You need to login first.', response,data)
-	self.register('Fletcher', 'fletcher@realpython.com', 'salasana', 'salasana')
-	self.login('Fletcher', 'salasana')
-	self.assertEqual(response.status_code, 200)
-	self.assertIn(b'Add a new task:', response.data)
+	def test_logged_in_users_can_access_tasks_page(self):
+		self.register(
+		'Fletcher', 'fletcher@realpython.com', 'python101',
+		'python101'
+		)
+		self.login('Fletcher', 'python101')
+		response = self.app.get('tasks/')
+		self.assertEqual(response.status_code, 200)
+		self.assertIn(b'Add a new task:', response.data)
 
-# 
+	def test_not_logged_in_users_cannot_access_tasks_page(self):
+		response = self.app.get('tasks/', follow_redirects=True)
+		self.assertIn(b'You need to login first.', response.data)
+
+	def test_users_can_add_tasks(self):
+		self.create_user('Michael', 'michael@realpython.com', 'python')
+		self.login('Michael', 'python')
+		self.app.get('tasks/', follow_redirects=True)
+		response=self.create_task()
+		self.assertIn(
+			b'New entry was successfully posted. Thanks.', response.data)
+
+	def test_users_cannot_add_tasks_when_error(self):
+		self.create_user('Michael', 'michael@realpython.com', 'python')
+		self.login('Michael', 'python')
+		self.app.get('tasks/', follow_redirects=True)
+		response = self.app.post('add/', data=dict(
+			name='Go to the bank',
+			due_date='',
+			priority='1',
+			posted_date='02/05/2014',
+			status='1'), follow_redirects=True)
+		self.assertIn(b'This field is required.', response.data)
+
+	def test_users_can_complete_tasks(self):
+		self.create_user('Michael', 'michael@realpython.com', 'python')
+		self.login('Michael', 'python')
+		self.app.get('tasks/', follow_redirects=True)
+		self.create_task()
+		response = self.app.get("complete/1/", follow_redirects=True)
+		self.assertIn(b'The task is complete. Nice.', response.data)
+
+	def test_users_can_delete_tasks(self):
+		self.create_user('Michael', 'michael@realpython.com', 'python')
+		self.login('Michael', 'python')
+		self.app.get('tasks/', follow_redirects=True)
+		self.create_task()
+		response = self.app.get("delete/1/", follow_redirects=True)
+		self.assertIn(b'The task was deleted.', response.data)
+
+	def test_users_cannot_complete_tasks_that_are_not_created_by_them(self):
+		self.create_user('Michael', 'michael@realpython.com', 'python')
+		self.login('Michael', 'python')
+		self.app.get('tasks/', follow_redirects=True)
+		self.create_task()
+		self.logout()
+		self.create_user('Fletcher', 'fletcher@realpython.com', 
+			'python101')
+		self.login('Fletcher', 'python101')
+		self.app.get('tasks/', follow_redirects=True)
+		response = self.app.get("complete/1/", follow_redirects=True)
+		self.assertNotIn(
+			b'The task is complete. Nice.', response.data)
+		
+
 
 if __name__ == "__main__":
 	unittest.main()
