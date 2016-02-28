@@ -58,7 +58,6 @@ class AllTests(unittest.TestCase):
 			posted_date='02/04/2014',
 			status='1'), follow_redirects=True)
 
-	# each test should start with 'test'
 	def test_user_can_register(self):
 		new_user=User("michael", "michael@mherman.org",
 			"michaelherman")
