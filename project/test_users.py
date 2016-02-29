@@ -49,6 +49,12 @@ class AllTests(unittest.TestCase):
 		db.session.add(new_user)
 		db.session.commit()
 
+	def check_form_is_present(self, rout, assertText):
+		response = self.app.get(rout)
+		bitti=assertText.encode("utf-8")
+		self.assertEqual(response.status_code, 200)
+		self.assertIn(bitti,response.data)
+
 	def test_user_can_register(self):
 		self.create_user("michael", "michael@mherman.org",
 			"michaelherman")
@@ -58,10 +64,7 @@ class AllTests(unittest.TestCase):
 		assert t.name == "michael"
 
 	def test_form_is_present_on_login_page(self):
-		response = self.app.get('/')
-		self.assertEqual(response.status_code, 200)
-		self.assertIn(b'Please sign in to access your task list',
-			response.data)
+		self.check_form_is_present('/', 'Please sign in to access your task list')
 
 	def test_users_cannot_login_unless_registered(self):
 		response=self.login('foo', 'bar')
@@ -78,6 +81,8 @@ class AllTests(unittest.TestCase):
 			'python')
 		response = self.login('alert("alert box!");', 'foo')
 		self.assertIn(b'Invalid username or password.', response.data)
+
+
 
 if __name__ == "__main__":
 	unittest.main()
