@@ -56,12 +56,10 @@ class AllTests(unittest.TestCase):
 		self.assertIn(bitti,response.data)
 
 	def test_user_can_register(self):
-		self.create_user("michael", "michael@mherman.org",
-			"michaelherman")
-		test=db.session.query(User).all()
-		for t in test:
-			t.name
-		assert t.name == "michael"
+		self.app.get('/response', follow_redirects=True)
+		response=self.register("michael", "michael@mherman.org",
+			"python", "python")
+		self.assertIn(b'Thanks for registering. Please login.', response.data)
 
 	def test_form_is_present_on_login_page(self):
 		self.check_form_is_present('/', 'Please sign in to access your task list')
@@ -82,7 +80,30 @@ class AllTests(unittest.TestCase):
 		response = self.login('alert("alert box!");', 'foo')
 		self.assertIn(b'Invalid username or password.', response.data)
 
+	def test_form_is_present_on_register_page(self):
+		self.check_form_is_present('register/', 'Please register to access the task list.')
 
+	def test_user_registration_error(self):
+		self.app.get('register/', follow_redirects=True)
+		self.register(
+			'Michael', 'michael@realpython.com', 'python', 'python')
+		self.app.get('register/', follow_redirects=True)
+		response = self.register(
+			'Michael', 'michael@realpython.com', 'python', 'python')
+		self.assertIn(b'That username and/or email already exist.',
+			response.data)
+
+	def test_logged_in_users_can_logout(self):
+		self.register('Fletcher', 'fletcher@realpython.com',
+			'python101', 'python101')
+		self.login('Fletcher', 'python101')
+		response = self.logout()
+		self.assertIn(b'Goodbye!', response.data)
+
+
+	def test_not_logged_in_users_cannot_logout(self):
+		response = self.logout()
+		self.assertNotIn(b'Goodbye!', response.data)
 
 if __name__ == "__main__":
 	unittest.main()
